@@ -30,6 +30,7 @@ export class SmallUid {
      * If a `bigint` is provided, the instance is initialized with that value.
      *
      * If a `string` is provided, the instance is initialized with the decoded value of the base64url encoded string.
+     * The string could accept a base64url encoded string with or without padding.
      *
      * @param input the value to initialize the instance with. It can be either a `bigint`, a `string`, or `undefined`.
      */
@@ -133,10 +134,13 @@ export class SmallUid {
      * If the given string is not a valid base64url encoded string, an error is
      * thrown.
      *
-     * @param {string} string - The base64url encoded string to parse.
+     * @param string - The base64url encoded string to parse.
      * @returns The parsed `SmallUid` instance.
      */
     #stringToValue(string: string): bigint {
+        if (string.length > 12) {
+            throw new Error(`Input too long: ${string}`);
+        }
         const base64urlRegex = /^[A-Za-z0-9\-_]+=?=?$/;
         if (!base64urlRegex.test(string)) {
             throw new Error(`Invalid base64url encoded string: ${string}`);
