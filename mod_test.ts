@@ -17,11 +17,6 @@ Deno.test("SmallUid", () => {
   console.log(value2);
   assertEquals(value, value2);
   assertEquals(string, string2);
-  // assertEquals(typeof string, "string");
-  // assertEquals(typeof value, "bigint");
-  // assertEquals(string.length, 12);
-  // assertEquals(Number(string[0]), 8); // timestamp should be at least 8
-  // assertEquals(Number(string[string.length - 1]), 0); // random should be at most 0
 });
 
 Deno.test("stringToValue", () => {
@@ -35,7 +30,7 @@ Deno.test("stringToValue", () => {
   assertEquals(value, uid.value);
 });
 
-Deno.test("Miscellaneous", () => {
+Deno.test("Padding vs Non Padding", () => {
   const uid = new SmallUid();
   const uidString = uid.string;
   const uidStringUnPadded = uid.unPad().string;

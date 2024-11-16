@@ -14,8 +14,10 @@ import { generate } from "./generator.ts";
  * @example
  * import { SmallUid } from 'jsr:@al-ula/small-uid'
  *
- * const uid = new SmallUid()
- * console.log(uid.string) // 'XxXxXxXxXxXxXxXx'
+ * const uid = new SmallUid();
+ * console.log(uid.string); // 'XxXxXxXxXxX='
+ * console.log(uid.unPad().string); // 'XxXxXxXxXxX'
+ * console.log(uid.value); // 0n
  */
 export class SmallUid {
   static MAX_U64: bigint = BigInt(18446744073709551615n);
@@ -32,7 +34,8 @@ export class SmallUid {
    * If a `string` is provided, the instance is initialized with the decoded value of the base64url encoded string.
    * The string could accept a base64url encoded string with or without padding.
    *
-   * @param input the value to initialize the instance with. It can be either a `bigint`, a `string`, or `undefined`.
+   * @param input the value to initialize the instance with.
+   * It can be either a `bigint`, a `string`, or `undefined`.
    */
   constructor(input?: bigint | string) {
     if (input === undefined || input === null) {

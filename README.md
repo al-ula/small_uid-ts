@@ -1,7 +1,6 @@
 # Small UID
 
-⚠️ _This project is in experimental phase, the API may may be subject to
-change._
+⚠️ _This project is in experimental phase, the API may be subject to change._
 
 This project is a TypeScript implementation of
 [Small UID](https://github.com/al-ula/small_uid).
@@ -11,7 +10,8 @@ However, they aren't the best choice mainly due to their random sorting and the
 resulting fragmentation in databases indexes.
 
 Using [ULIDs](https://github.com/ulid/spec) is generally a very good
-alternative, solving most of UUID flaws.
+alternative, solving most of UUID flaws. But, ULID's u128 bit length is too long
+for many databases if you want to use its sortable feature.
 
 Twitter's Snowflake is another option if you want to generate roughly sortable
 uid. But, Snowflake is not using random numbers instead it used machine id to
@@ -39,7 +39,8 @@ efficient database _Primary Key_:
 | Random bits               |         20          |          80           |    122    |
 | Collision odds &ast;&ast; |  1,024 _/ ms&ast;_  | 1.099e+12 _/ ms&ast;_ | 2.305e+18 |
 
-&ast; _theorical number of generated uids before the first expected collision._\
+&ast; _theoretical number of generated uids before the first expected
+collision._\
 &ast;&ast; _the uid includes a timestamp, so collisions may occur only during
 the same millisecond._\
 &ast;&ast;&ast; _monotonic sort order, but random order when generated at the
@@ -78,8 +79,8 @@ import { SmallUid } from "@al-ula/small-uid";
 const uid = new SmallUid();
 console.log(uid.string); // prints the base64url encoded string
 // will print something like 'XxXxXxXxXxX=' with '=' as padding
-// use console.log(uid.unPad().string); if you don't want padding
-console.log(uid.value); // prints the underlying numeric value
+console.log(uid.unPad().string); // if you don't want padding
+console.log(uid.value); // prints the underlying integer value
 ```
 
 ### Generating Small UIDs from a string
