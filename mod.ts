@@ -4,7 +4,7 @@ import { generate } from "./generator.ts";
 /**
  * The `SmallUid` class generates small, url-safe, lexicographically sortable, unique ids.
  *
- * The generated ids are 64-bit bigints, which are base64url encoded.
+ * The generated ids are 64-bit bigint, which are base64url encoded.
  * The first 44 bits contain the timestamp with millisecond precision.
  * The remaining 20 bits are filled with a random value.
  *
