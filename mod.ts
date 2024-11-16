@@ -112,6 +112,11 @@ export class SmallUid {
         return this.#string;
     }
 
+    unPad(): SmallUid {
+        this.#string = this.#string.replace(/=/g, '');
+        return this;
+    }
+
     /**
      * Parses a base64url encoded string and returns the corresponding `SmallUid`
      * instance.

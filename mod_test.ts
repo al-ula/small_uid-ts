@@ -35,6 +35,16 @@ Deno.test("stringToValue", () => {
     assertEquals(value, uid.value);
 })
 
+Deno.test("Miscellaneous", () => {
+    const uid = new SmallUid();
+    const uidString = uid.string;
+    const uidStringUnPadded = uid.unPad().string;
+    console.log(uidString);
+    console.log(uidStringUnPadded);
+    assertEquals(uidString.length, 12);
+    assertEquals(uidStringUnPadded.length, 11);
+});
+
 function stringToValue(string: string): bigint {
     const base64urlRegex = /^[A-Za-z0-9\-_]+=?=?$/;
     if (!base64urlRegex.test(string)) {
