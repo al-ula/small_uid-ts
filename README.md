@@ -2,7 +2,7 @@
 
 [![GitHub License](https://img.shields.io/github/license/al-ula/small_uid-ts)](https://github.com/al-ula/small_uid-ts/blob/master/LICENSE-APACHE)
 [![GitHub License](https://img.shields.io/badge/license-MIT-limegreen)](https://github.com/al-ula/small_uid-ts/blob/master/LICENSE-MIT)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/al-ula/small_uid-ts/deno_release.yml?branch=master)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/al-ula/small_uid-ts/deno.yml?branch=master)
 [![JSR](https://jsr.io/badges/@al-ula/small-uid)](https://jsr.io/@al-ula/small-uid)
 
 This project is a TypeScript implementation of
