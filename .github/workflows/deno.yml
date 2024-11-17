@@ -1,0 +1,39 @@
+name: Deno
+
+on:
+  push:
+    branches:
+      - release
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x # Run with latest stable Deno.
+      # Check if the code is formatted according to Deno's default
+      # formatting conventions.
+      - run: deno fmt --check
+      # Scan the code for syntax errors and style issues.
+      - run: deno lint
+      - run: deno test
+
+  publish:
+    needs: test
+    if: github.ref == 'refs/heads/release'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x # Run with latest stable Deno.
+      - name: Publish package
+        run: deno publish
