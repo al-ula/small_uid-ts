@@ -1,4 +1,4 @@
-import { atobu, btoau } from "./utils.ts";
+import { decode, encode } from "./utils.ts";
 import { generate } from "./generator.ts";
 
 /**
@@ -14,92 +14,86 @@ import { generate } from "./generator.ts";
  * @example
  * import { SmallUid } from 'jsr:@al-ula/small-uid'
  *
- * const uid = new SmallUid();
- * console.log(uid.string); // 'XxXxXxXxXxX='
- * console.log(uid.unPad().string); // 'XxXxXxXxXxX'
- * console.log(uid.value); // 0n
+ * const uid = SmallUid.gen();
+ * console.log(uid.string); // 'XxXxXxXxXxX'
+ * console.log(uid.value); // 12345678n
  */
 export class SmallUid {
-  static MAX_U64: bigint = BigInt(18446744073709551615n);
-  #value: bigint = 0n;
-  #string: string = "";
+  static #MAX: bigint =
+    0b11111111_11111111_11111111_11111111_11111111_11111111_11111111_11111111n;
+  static #RIGHT20: bigint = 0b11111111_11111111_1111n;
+  readonly #value: bigint = 0n;
 
   /**
-   * Constructs a new `SmallUid` instance.
+   * Creates a new `SmallUid` instance.
+   * If no value is provided, the new instance will be initialized as 0n.
+   * If a bigint or number is provided, the new instance will be initialized
+   * with the provided value.
+   * If a string is provided, the new instance will be initialized with the
+   * value decoded from the provided string.
    *
-   * If no argument is provided, the instance is generated with a random value and the current timestamp.
-   *
-   * If a `bigint` is provided, the instance is initialized with that value.
-   *
-   * If a `string` is provided, the instance is initialized with the decoded value of the base64url encoded string.
-   * The string could accept a base64url encoded string with or without padding.
-   *
-   * @param input the value to initialize the instance with.
-   * It can be either a `bigint`, a `string`, or `undefined`.
+   * @param {bigint | number | string} input - The value to initialize the instance with.
    */
-  constructor(input?: bigint | string) {
+  constructor(input?: bigint | number | string) {
     if (input === undefined || input === null) {
-      this.gen();
+      return this;
     } else if (typeof input === "bigint") {
-      this.#value = input;
-      this.#string = this.#genString(input);
+      this.#value = this.#filterValue(input);
+    } else if (typeof input === "number") {
+      this.#value = this.#filterValue(BigInt(input));
     } else {
       this.#value = this.#stringToValue(input);
-      this.#string = input;
     }
   }
 
   /**
-   * The underlying numeric value of the small-uid.
+   * @return bigint - The underlying numeric value of the small-uid.
    */
   get value(): bigint {
     return this.#value;
   }
 
   /**
-   * Returns the base64url encoded string representation of the small-uid.
+   * @returns string - The base64url encoded string representation of the small-uid.
    */
   get string(): string {
-    return this.#string;
+    return this.#genString(this.#value);
   }
 
   /**
    * Generates a new `SmallUid` with a random value and the current timestamp.
-   * Updates the internal string representation and numeric value.
-   * @returns The updated instance of `SmallUid`.
+   * @returns SmallUid - The new instance of `SmallUid`.
    */
-  gen(): SmallUid {
+  static gen(): SmallUid {
     const random = generate();
     const timestamp = BigInt(Date.now());
-    this.#value = this.#assemble(timestamp, random);
-    this.#string = this.#genString(this.#value);
-    return this;
+    const value: bigint = this.#assemble(timestamp, random);
+    return new SmallUid(value);
   }
 
   /**
-   * Generates a new `SmallUid` using a specified timestamp and a random value.
+   * Creates a new `SmallUid` using a specified timestamp.
    *
-   * @param timestamp - The timestamp to use for the ID generation.
-   * @returns The updated instance of `SmallUid`.
+   * The ID will contain the specified timestamp and a random value.
+   * @param timestamp - The timestamp to use for the ID creation.
+   * @returns SmallUid - The new instance of `SmallUid`.
    */
-  fromTimestamp(timestamp: bigint): SmallUid {
+  static fromTimestamp(timestamp: bigint): SmallUid {
     const random = generate();
-    this.#value = this.#assemble(timestamp, random);
-    this.#string = this.#genString(this.#value);
-    return this;
+    const value: bigint = this.#assemble(timestamp, random);
+    return new SmallUid(value);
   }
 
   /**
    * Generates a new `SmallUid` using a specified random value and the current timestamp.
    *
    * @param random - The random value to use for the ID generation.
-   * @returns The updated instance of `SmallUid`.
+   * @returns SmallUid - The new instance of `SmallUid`.
    */
-  fromRandom(random: bigint): SmallUid {
-    const timestamp = BigInt(Date.now());
-    this.#value = this.#assemble(timestamp, random);
-    this.#string = this.#genString(this.#value);
-    return this;
+  static fromRandom(random: bigint): SmallUid {
+    const timestamp: bigint = BigInt(Date.now());
+    const value: bigint = this.#assemble(timestamp, random);
+    return new SmallUid(value);
   }
 
   /**
@@ -107,89 +101,131 @@ export class SmallUid {
    *
    * @param timestamp - The timestamp to use for the ID creation.
    * @param random - The random value to use for the ID creation.
-   * @returns The updated instance of `SmallUid`.
+   * @returns SmallUid - The new instance of `SmallUid`.
    */
-  fromParts(timestamp: bigint, random: bigint): SmallUid {
-    this.#value = this.#assemble(timestamp, random);
-    this.#string = this.#genString(this.#value);
-    return this;
-  }
-
-  unPad(): SmallUid {
-    this.#string = this.#string.replace(/=/g, "");
-    return this;
+  static fromParts(timestamp: bigint, random: bigint): SmallUid {
+    const value = this.#assemble(timestamp, random);
+    return new SmallUid(value);
   }
 
   /**
-   * Parses a base64url encoded string and returns the corresponding `SmallUid`
-   * instance.
+   * Generates a base64url encoded string from a given `SmallUid` value.
    *
-   * If the given string is not a valid base64url encoded string, an error is
-   * thrown.
+   * The returned string is the base64url encoded representation of the
+   * `SmallUid` value.
    *
-   * @returns The parsed `SmallUid` instance.
-   * @param value
+   * @param value - The `SmallUid` value to generate the string from.
+   * @returns string - The base64url encoded string representation of the `SmallUid`.
    */
   #genString(value: bigint): string {
-    return btoau(
-      new Uint8Array(
-        value.toString(16).match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16)),
-      ),
-    );
+    return encode(value);
   }
 
   /**
-   * Parses a base64url encoded string and returns the corresponding `SmallUid`
-   * instance.
+   * Converts a base64url encoded string to its corresponding `SmallUid` value.
    *
-   * If the given string is not a valid base64url encoded string, an error is
-   * thrown.
+   * The given string must be a valid base64url encoded string.
    *
-   * @param string - The base64url encoded string to parse.
-   * @returns The parsed `SmallUid` instance.
+   * @param string - The base64url encoded string to convert.
+   * @returns bigint - The `SmallUid` value corresponding to the given base64url encoded string.
+   * @throws Error if the given string is not a valid base64url encoded string.
    */
   #stringToValue(string: string): bigint {
-    if (string.length > 12) {
-      throw new Error(`Input too long: ${string}`);
-    }
-    const base64urlRegex = /^[A-Za-z0-9\-_]+=?=?$/;
-    if (!base64urlRegex.test(string)) {
+    const encoded = string.slice(0, 10);
+    const base64urlRegex = /^[A-Za-z0-9\-_]+$/;
+    if (!base64urlRegex.test(encoded)) {
       throw new Error(`Invalid base64url encoded string: ${string}`);
     }
-    const paddedString = string.padEnd(
-      string.length + (4 - (string.length % 4)) % 4,
-      "=",
-    );
-    return BigInt(
-      "0x" +
-        Array.from(atobu(paddedString)).map((byte) =>
-          byte.toString(16).padStart(2, "0")
-        ).join(""),
-    );
+    return decode(encoded);
   }
 
   /**
-   * Assembles a `SmallUid` value from a given timestamp and random value.
+   * Assembles a `SmallUid` value from the given timestamp and random parts.
    *
-   * The timestamp is expected to be a positive `bigint` representing the
-   * number of milliseconds since the Unix epoch.
+   * The returned value is a `SmallUid` value that is composed of the given
+   * timestamp and random parts.
    *
-   * The random value is expected to be a positive `bigint` with at most 20
-   * bits. It is used to add entropy to the generated `SmallUid`.
-   *
-   * The returned `SmallUid` is guaranteed to be a positive `bigint` with at
-   * most 64 bits.
-   *
-   * @param timestamp - The timestamp to use when assembling the `SmallUid`.
-   * @param random - The random value to use when assembling the `SmallUid`.
+   * @param timestamp - The timestamp to use for the ID creation.
+   * @param random - The random value to use for the ID creation.
+   * @returns bigint - The bigint value composed of the given timestamp and random parts.
    */
-  #assemble(timestamp: bigint, random: bigint): bigint {
+  static #assemble(timestamp: bigint, random: bigint): bigint {
     if (timestamp < 0n || random < 0n) {
       throw new Error(
         `timestamp and random must be positive, but got ${timestamp} and ${random}`,
       );
     }
-    const value = (timestamp << 20n) | random;
-    return value & SmallUid.MAX_U64;
+    const time: bigint = timestamp << 20n;
+
+    const randBitStr = random.toString(2);
+    const randBitLength = randBitStr.length;
+    if (randBitLength > 20) {
+      if (randBitLength > 64) {
+        random = (random & SmallUid.#MAX) >> 44n;
+      } else {
+        random = random >> 44n;
+      }
+    }
+    return time | random;
   }
+
+  /**
+   * @returns bigint - Returns the timestamp of the `SmallUid` as a positive `bigint`.
+   *
+   * The returned `bigint` is the timestamp, which is a positive value
+   * representing the number of milliseconds since the Unix epoch.
+   * It is a 44-bit value that is embedded in the `SmallUid` value.
+   */
+  get timestamp(): bigint {
+    return (this.#value >> 20n);
+  }
+
+  /**
+   * @returns bigint - Returns the value for the random value of the `SmallUid` as a positive `bigint`.
+   *
+   * The returned `bigint` is the random value of the `SmallUid`, which is
+   * a 20-bit positive value that is embedded in the `SmallUid` value.
+   */
+  get random(): bigint {
+    return this.#value & SmallUid.#RIGHT20;
+  }
+
+  /**
+   * Disassembles a given `SmallUid` value into its timestamp and random parts.
+   *
+   * The returned array contains two elements:
+   *   - The first element is the timestamp, which is a positive `bigint`
+   *     representing the number of milliseconds since the Unix epoch.
+   *   - The second element is the random value, which is a positive `bigint`
+   *     with at most 20 bits.
+   *
+   * @returns [] - An array with two elements: the timestamp and the random value.
+   */
+  get disassembled(): [bigint, bigint] {
+    const timestamp = this.#value >> 20n;
+    const random = this.#value & SmallUid.#RIGHT20;
+    return [timestamp, random];
+  }
+  
+  #filterValue(value: bigint): bigint {
+    return value & SmallUid.#MAX;
+  }
+}
+
+/**
+ * Safely converts a base64 string to a base64url string.
+ *
+ * This function escapes a base64 string by replacing:
+ *   - `+` with `-`
+ *   - `/` with `_`
+ *   - `=` with `` (emptiness)
+ *
+ * @param string - The base64 string to escape
+ * @returns string - The escaped base64url string
+ */
+export function escapeUrl(string: string): string {
+  return string
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
 }

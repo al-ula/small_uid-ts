@@ -1,66 +1,77 @@
-import { assertEquals } from "@std/assert";
-import { SmallUid } from "./mod.ts";
-import { atobu, btoau } from "./utils.ts";
+import { assertEquals, assertNotEquals } from "@std/assert";
+import { escapeUrl, SmallUid } from "./mod.ts";
 
-// Deno.test(function addTest() {
-//   assertEquals(add(2, 3), 5);
-// });
-Deno.test("SmallUid", () => {
+Deno.test("new", () => {
   const uid = new SmallUid();
-  const string = uid.string;
-  const value = uid.value;
-  const value2 = stringToValue(string);
-  const string2 = genString(value);
-  console.log(string);
-  console.log(string2);
-  console.log(value);
-  console.log(value2);
-  assertEquals(value, value2);
-  assertEquals(string, string2);
-});
-
-Deno.test("stringToValue", () => {
-  const uid = new SmallUid();
-  const strippeduid = uid.string.replace(/=/g, "");
-  console.log(strippeduid);
   console.log(uid.string);
-  const value = stringToValue(strippeduid);
-  console.log(value);
   console.log(uid.value);
-  assertEquals(value, uid.value);
+  assertEquals(uid.string, "");
+  assertEquals(uid.value, 0n);
 });
 
-Deno.test("Padding vs Non Padding", () => {
-  const uid = new SmallUid();
-  const uidString = uid.string;
-  const uidStringUnPadded = uid.unPad().string;
-  console.log(uidString);
-  console.log(uidStringUnPadded);
-  assertEquals(uidString.length, 12);
-  assertEquals(uidStringUnPadded.length, 11);
+Deno.test("generate", () => {
+  const uid = SmallUid.gen();
+  console.log(uid.string);
+  console.log(uid.value);
+  assertNotEquals(uid.string, "");
+  assertNotEquals(uid.value, 0n);
 });
 
-function stringToValue(string: string): bigint {
-  const base64urlRegex = /^[A-Za-z0-9\-_]+=?=?$/;
-  if (!base64urlRegex.test(string)) {
-    throw new Error(`Invalid base64url encoded string: ${string}`);
-  }
-  const paddedString = string.padEnd(
-    string.length + (4 - (string.length % 4)) % 4,
-    "=",
-  );
-  return BigInt(
-    "0x" +
-      Array.from(atobu(paddedString)).map((byte) =>
-        byte.toString(16).padStart(2, "0")
-      ).join(""),
-  );
-}
+Deno.test("from timestamp", () => {
+  const uid = SmallUid.gen();
+  const uidTimestamp = uid.timestamp;
+  const uid2 = SmallUid.fromTimestamp(uidTimestamp);
+  const uid2Timestamp = uid2.timestamp;
+  assertEquals(uidTimestamp, uid2Timestamp);
+});
 
-function genString(value: bigint): string {
-  return btoau(
-    new Uint8Array(
-      value.toString(16).match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16)),
-    ),
-  );
-}
+Deno.test("from random", () => {
+  const uid = SmallUid.gen();
+  const uidRandom = uid.random;
+  const uid2 = SmallUid.fromRandom(uidRandom);
+  const uid2Random = uid2.random;
+  console.log("random 1:", uidRandom);
+  console.log("random 2:", uid2Random);
+  console.log("value2:", uid2.value);
+  assertEquals(uidRandom, uid2Random);
+});
+
+Deno.test("from parts", () => {
+  const uid = SmallUid.gen();
+  const [uidTimestamp, uidRandom] = uid.disassembled;
+  const uid2 = SmallUid.fromParts(uidTimestamp, uidRandom);
+  const [uid2Timestamp, uid2Random] = uid2.disassembled;
+  assertEquals(uidTimestamp, uid2Timestamp);
+  assertEquals(uidRandom, uid2Random);
+});
+
+Deno.test("get timestamp", () => {
+  const uid = SmallUid.gen();
+  const timestamp = uid.timestamp;
+  assertEquals(typeof timestamp, "bigint");
+  assertEquals(timestamp >= 0n, true);
+});
+
+Deno.test("get random", () => {
+  const random: bigint = SmallUid.gen().random;
+  const uid = SmallUid.fromRandom(random);
+  const uidRandom: bigint = uid.random;
+  console.log("random 1:", random.toString(2));
+  console.log("random 2:", uidRandom.toString(2));
+  assertEquals(uidRandom, random);
+});
+
+Deno.test("Disassemble", () => {
+  const uid = SmallUid.gen();
+  const [timestamp, random] = uid.disassembled;
+  console.log(timestamp);
+  console.log(random);
+  assertEquals(typeof timestamp, "bigint");
+  assertEquals(typeof random, "bigint");
+});
+
+Deno.test("Convert Base64", () => {
+  const base64 = "PDw/Pz8+Pg==";
+  const base64url = "PDw_Pz8-Pg";
+  assertEquals(escapeUrl(base64), base64url);
+});

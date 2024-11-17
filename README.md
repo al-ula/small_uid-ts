@@ -1,9 +1,12 @@
 # Small UID
 
-⚠️ _This project is in experimental phase, the API may be subject to change._
+[![GitHub License](https://img.shields.io/github/license/al-ula/small_uid-ts)](https://github.com/al-ula/small_uid-ts/blob/master/LICENSE-APACHE)
+[![GitHub License](https://img.shields.io/badge/license-MIT-limegreen)](https://github.com/al-ula/small_uid-ts/blob/master/LICENSE-MIT)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/al-ula/small_uid-ts/deno_release.yml?branch=master)
+[![JSR](https://jsr.io/badges/@al-ula/small-uid)](https://jsr.io/@al-ula/small-uid)
 
 This project is a TypeScript implementation of
-[Small UID](https://github.com/al-ula/small_uid).
+[Small UID](https://github.com/al-ula/small_uid). A small, url-safe, user-friendly unique, lexicographically sortable id generator.
 
 UUIDs are frequently used as database _Primary Key_ in software development.
 However, they aren't the best choice mainly due to their random sorting and the
@@ -28,7 +31,7 @@ efficient database _Primary Key_:
 
 - Half smaller than UUID / ULID (64-bit)
 - Lexicographically sortable
-- Encodable as a short user-friendly and URL-safe base-64 string (`a-zA-Z0-9_-`)
+- Encoded as a short user-friendly and URL-safe base-64 string (`a-zA-Z0-9_-`)
 - User-friendly strings are generated in a way to be always very different (no
   shared prefix due to similar timestamps)
 
@@ -78,16 +81,22 @@ import { SmallUid } from "@al-ula/small-uid";
 
 const uid = new SmallUid();
 console.log(uid.string); // prints the base64url encoded string
-// will print something like 'XxXxXxXxXxX=' with '=' as padding
-console.log(uid.unPad().string); // if you don't want padding
 console.log(uid.value); // prints the underlying integer value
+```
+
+### Generating Small UIDs from a 64-bit integer
+
+```typescript
+const smallUidValue: bigint = 0x123456789abcdefn;
+const uid = new SmallUid(smallUidValue);
+console.log(uid.string); // prints the base64url encoded string
+console.log(uid.value); // prints the underlying numeric value
 ```
 
 ### Generating Small UIDs from a string
 
 ```typescript
 const smallUidString = "XxXxXxXxXxX";
-// or const smallUidString = 'XxXxXxXxXxX='; if using padding
 const uid = new SmallUid(smallUidString);
 console.log(uid.string); // prints the base64url encoded string
 console.log(uid.value); // prints the underlying numeric value
