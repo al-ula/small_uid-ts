@@ -206,7 +206,7 @@ export class SmallUid {
     const random = this.#value & SmallUid.#RIGHT20;
     return [timestamp, random];
   }
-  
+
   #filterValue(value: bigint): bigint {
     return value & SmallUid.#MAX;
   }

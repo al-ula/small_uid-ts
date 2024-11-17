@@ -6,7 +6,8 @@
 [![JSR](https://jsr.io/badges/@al-ula/small-uid)](https://jsr.io/@al-ula/small-uid)
 
 This project is a TypeScript implementation of
-[Small UID](https://github.com/al-ula/small_uid). A small, url-safe, user-friendly unique, lexicographically sortable id generator.
+[Small UID](https://github.com/al-ula/small_uid). A small, url-safe,
+user-friendly unique, lexicographically sortable id generator.
 
 UUIDs are frequently used as database _Primary Key_ in software development.
 However, they aren't the best choice mainly due to their random sorting and the
