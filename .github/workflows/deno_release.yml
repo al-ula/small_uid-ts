@@ -5,6 +5,8 @@ on:
     workflows: ["Deno test"]
     types:
       - completed
+    status:
+      - success
     branches:
       - release
 

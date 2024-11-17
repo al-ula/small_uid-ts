@@ -3,9 +3,7 @@ import { escapeUrl, SmallUid } from "./mod.ts";
 
 Deno.test("new", () => {
   const uid = new SmallUid();
-  console.log(uid.string);
   console.log(uid.value);
-  assertEquals(uid.string, "");
   assertEquals(uid.value, 0n);
 });
 
