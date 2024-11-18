@@ -91,7 +91,7 @@ Deno.test("Create from String", () => {
 
 Deno.test("Create from negative timestamp", () => {
   const uid = SmallUid.gen();
-  const timestamp = -uid.timestamp;
+  const timestamp: bigint = -uid.timestamp;
   expect(() => SmallUid.fromTimestamp(timestamp)).toThrow();
 });
 
@@ -99,4 +99,39 @@ Deno.test("Create from negative random", () => {
   const uid = SmallUid.gen();
   const random = -uid.random;
   expect(() => SmallUid.fromRandom(random)).toThrow();
+});
+
+Deno.test("Create from short string", () => {
+  const uid = SmallUid.gen();
+  const string = uid.string.slice(0, 5);
+  expect(() => new SmallUid(string)).toThrow();
+});
+
+Deno.test("Create from long string", () => {
+  const uid = SmallUid.gen();
+  const string = uid.string + "a";
+  const uid2 = new SmallUid(string);
+  assertEquals(uid.value, uid2.value);
+});
+
+Deno.test("Create from invalid Base64 string", () => {
+  const string = "GTQFg4x-VYo";
+  const uid = new SmallUid(string);
+  assertEquals(string, uid.string);
+});
+
+Deno.test("Create from invalid Base64url string", () => {
+  const string = "GTQFg4x+VYo";
+  expect(() => new SmallUid(string)).toThrow();
+});
+
+Deno.test("Create from giant random", () => {
+  const random = 0xFFFFFFFF_FFFFFFFF_FFFFn;
+  const uid = SmallUid.fromRandom(random);
+  assertEquals(uid.string.length, 11);
+});
+
+Deno.test("Create from giant timestamp", () => {
+  const timestamp = 0xFFFFFFFF_FFFFFFFF_FFFFn;
+  expect(() => SmallUid.fromTimestamp(timestamp)).toThrow();
 });

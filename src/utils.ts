@@ -10,7 +10,6 @@ export function encode(v: bigint): string {
 export function decode(s: string): bigint {
   // Replace both characters in one pass using regex alternation
   const normalized = s.replace(/[-_]/g, (m) => m === "-" ? "+" : "/");
-
   // Decode base64 to binary string
   const binaryString = atob(normalized);
 

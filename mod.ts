@@ -11,12 +11,14 @@ import { generate } from "./src/generator.ts";
  * The `SmallUid` class is immutable and its instances are safe to be used
  * as keys in objects or as identifiers in any other context.
  *
+ * If you have a SmallUid encoded in Base64 use escapeUrl to convert it to Base64url
+ *
  * @example
  * import { SmallUid } from 'jsr:@al-ula/small-uid'
- *
- * const uid = SmallUid.gen();
- * console.log(uid.string); // 'XxXxXxXxXxX'
- * console.log(uid.value); // 12345678n
+ * const uid = SmallUid.gen(); // 'XxXxXxXxXxX'
+ * console.log(uid.string); // 12345678n
+ * console.log(uid.value);
+ * const alienUid = SmallUid.escapeUrl("PDw/Pz8+Pg=="); // 'PDw_Pz8-Pg'
  */
 export class SmallUid {
   static #MAX: bigint = 0xFFFFFFFF_FFFFFFFFn;
@@ -37,7 +39,7 @@ export class SmallUid {
     if (input === undefined || input === null) {
       return this;
     } else if (typeof input === "bigint") {
-      this.#value = this.#filterValue(input);
+      this.#value = input & SmallUid.#MAX;
     } else {
       this.#value = this.#stringToValue(input);
     }
@@ -76,6 +78,9 @@ export class SmallUid {
    * @returns SmallUid - The new instance of `SmallUid`.
    */
   static fromTimestamp(timestamp: bigint): SmallUid {
+    if (timestamp.toString(2).length > 64n) {
+      throw new Error("Timestamp must be less than 64 bit");
+    }
     const random = generate();
     const value: bigint = this.#assemble(timestamp, random);
     return new SmallUid(value);
@@ -128,10 +133,14 @@ export class SmallUid {
    * @throws Error if the given string is not a valid base64url encoded string.
    */
   #stringToValue(string: string): bigint {
+    let encoded: string;
     if (string.length < 11) {
       throw new Error(`Invalid length: ${string} - ${string.length}`);
+    } else if (string.length > 11) {
+      encoded = string.slice(0, 11);
+    } else {
+      encoded = string;
     }
-    const encoded = string.slice(0, 11);
     const base64urlRegex = /^[A-Za-z0-9\-_]+$/;
     if (!base64urlRegex.test(encoded)) {
       throw new Error(`Invalid base64url encoded string: ${string}`);
@@ -205,10 +214,6 @@ export class SmallUid {
     const timestamp = this.#value >> 20n;
     const random = this.#value & SmallUid.#RIGHT20;
     return [timestamp, random];
-  }
-
-  #filterValue(value: bigint): bigint {
-    return value & SmallUid.#MAX;
   }
 }
 
