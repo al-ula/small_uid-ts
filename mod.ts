@@ -1,5 +1,5 @@
-import { decode, encode } from "./utils.ts";
-import { generate } from "./generator.ts";
+import { decode, encode } from "./src/utils.ts";
+import { generate } from "./src/generator.ts";
 
 /**
  * The `SmallUid` class generates small, url-safe, lexicographically sortable, unique ids.
@@ -177,7 +177,7 @@ export class SmallUid {
    * It is a 44-bit value that is embedded in the `SmallUid` value.
    */
   get timestamp(): bigint {
-    return (this.#value >> 20n);
+    return this.#value >> 20n;
   }
 
   /**
@@ -224,8 +224,5 @@ export class SmallUid {
  * @returns string - The escaped base64url string
  */
 export function escapeUrl(string: string): string {
-  return string
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
+  return string.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }

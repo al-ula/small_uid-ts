@@ -1,4 +1,6 @@
-import { assertEquals, assertNotEquals } from "@std/assert";
+import * as assert from "jsr:@std/assert";
+const assertNotEquals = assert.assertNotEquals;
+const assertEquals = assert.assertEquals;
 import { escapeUrl, SmallUid } from "./mod.ts";
 
 Deno.test("new", () => {
