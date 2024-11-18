@@ -1,11 +1,13 @@
-import * as assert from "jsr:@std/assert";
+import * as assert from "@std/assert";
+import { escapeUrl, SmallUid } from "./mod.ts";
+import { expect } from "jsr:@std/expect";
+
 const assertNotEquals = assert.assertNotEquals;
 const assertEquals = assert.assertEquals;
-import { escapeUrl, SmallUid } from "./mod.ts";
 
 Deno.test("new", () => {
   const uid = new SmallUid();
-  console.log(uid.value);
+  // console.log(uid.value);
   assertEquals(uid.value, 0n);
 });
 
@@ -74,4 +76,27 @@ Deno.test("Convert Base64", () => {
   const base64 = "PDw/Pz8+Pg==";
   const base64url = "PDw_Pz8-Pg";
   assertEquals(escapeUrl(base64), base64url);
+});
+
+Deno.test("Create from String", () => {
+  const uid1 = SmallUid.gen();
+  const string = uid1.string;
+  console.log("string is: ", string);
+  const uid2 = new SmallUid(string);
+  console.log("value is: ", uid1.value);
+  console.log("value is: ", uid2.value);
+  assertEquals(uid1.value, uid2.value);
+  assertEquals(uid1.string, uid2.string);
+});
+
+Deno.test("Create from negative timestamp", () => {
+  const uid = SmallUid.gen();
+  const timestamp = -uid.timestamp;
+  expect(() => SmallUid.fromTimestamp(timestamp)).toThrow();
+});
+
+Deno.test("Create from negative random", () => {
+  const uid = SmallUid.gen();
+  const random = -uid.random;
+  expect(() => SmallUid.fromRandom(random)).toThrow();
 });

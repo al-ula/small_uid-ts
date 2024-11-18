@@ -19,9 +19,8 @@ import { generate } from "./src/generator.ts";
  * console.log(uid.value); // 12345678n
  */
 export class SmallUid {
-  static #MAX: bigint =
-    0b11111111_11111111_11111111_11111111_11111111_11111111_11111111_11111111n;
-  static #RIGHT20: bigint = 0b11111111_11111111_1111n;
+  static #MAX: bigint = 0xFFFFFFFF_FFFFFFFFn;
+  static #RIGHT20: bigint = 0xFFFFFn;
   readonly #value: bigint = 0n;
 
   /**
@@ -32,15 +31,13 @@ export class SmallUid {
    * If a string is provided, the new instance will be initialized with the
    * value decoded from the provided string.
    *
-   * @param {bigint | number | string} input - The value to initialize the instance with.
+   * @param {bigint | string} input - The value to initialize the instance with.
    */
-  constructor(input?: bigint | number | string) {
+  constructor(input?: bigint | string) {
     if (input === undefined || input === null) {
       return this;
     } else if (typeof input === "bigint") {
       this.#value = this.#filterValue(input);
-    } else if (typeof input === "number") {
-      this.#value = this.#filterValue(BigInt(input));
     } else {
       this.#value = this.#stringToValue(input);
     }
@@ -131,7 +128,10 @@ export class SmallUid {
    * @throws Error if the given string is not a valid base64url encoded string.
    */
   #stringToValue(string: string): bigint {
-    const encoded = string.slice(0, 10);
+    if (string.length < 11) {
+      throw new Error(`Invalid length: ${string} - ${string.length}`);
+    }
+    const encoded = string.slice(0, 11);
     const base64urlRegex = /^[A-Za-z0-9\-_]+$/;
     if (!base64urlRegex.test(encoded)) {
       throw new Error(`Invalid base64url encoded string: ${string}`);
